@@ -1,3 +1,5 @@
+"use client"
+
 import { Search, Bell } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { UserMenu } from "@/components/user-menu"

@@ -10,7 +10,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     data: { user },
   } = await supabase.auth.getUser()
 
-  await ensureDbUser()
+  await ensureDbUser().catch((error) => {
+    console.error("Failed to sync Supabase user to Prisma:", error)
+  })
 
   const email = user?.email ?? "user@studio.co"
   const name =
