@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 import { Plus } from "lucide-react"
 import { AllTasksFormDialog } from "@/components/all-tasks-form-dialog"
 import { TaskStatusSelect } from "@/components/task-status-select"
+import { TaskMobileList } from "@/components/task-mobile-list"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -45,6 +46,10 @@ export function TasksBoard({ tasks, projects, users, projectNames }: TasksBoardP
   }, [tasks, projectFilter, statusFilter, assigneeFilter])
 
   const hasFilters = projectFilter !== "all" || statusFilter !== "all" || assigneeFilter !== "all"
+  const emptyMessage =
+    tasks.length === 0
+      ? "No tasks yet. Create your first task."
+      : "No tasks match the selected filters."
 
   function clearFilters() {
     setProjectFilter("all")
@@ -70,14 +75,14 @@ export function TasksBoard({ tasks, projects, users, projectNames }: TasksBoardP
         </Button>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-wrap items-end gap-4">
-          <label className="space-y-1.5">
+      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div className="grid w-full grid-cols-1 gap-3 sm:flex sm:w-auto sm:flex-wrap sm:items-end sm:gap-4">
+          <label className="flex w-full flex-col gap-1.5 sm:w-auto">
             <span className="text-xs font-medium text-muted-foreground">Project</span>
             <select
               value={projectFilter}
               onChange={(e) => setProjectFilter(e.target.value)}
-              className={cn(selectClassName, "min-w-[180px]")}
+              className={cn(selectClassName, "w-full sm:min-w-[180px]")}
             >
               <option value="all">All</option>
               {projects.map((p) => (
@@ -88,12 +93,12 @@ export function TasksBoard({ tasks, projects, users, projectNames }: TasksBoardP
             </select>
           </label>
 
-          <label className="space-y-1.5">
+          <label className="flex w-full flex-col gap-1.5 sm:w-auto">
             <span className="text-xs font-medium text-muted-foreground">Status</span>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as FilterValue)}
-              className={cn(selectClassName, "min-w-[140px]")}
+              className={cn(selectClassName, "w-full sm:min-w-[140px]")}
             >
               <option value="all">All</option>
               <option value="TODO">To Do</option>
@@ -102,12 +107,12 @@ export function TasksBoard({ tasks, projects, users, projectNames }: TasksBoardP
             </select>
           </label>
 
-          <label className="space-y-1.5">
+          <label className="flex w-full flex-col gap-1.5 sm:w-auto">
             <span className="text-xs font-medium text-muted-foreground">Assignee</span>
             <select
               value={assigneeFilter}
               onChange={(e) => setAssigneeFilter(e.target.value)}
-              className={cn(selectClassName, "min-w-[160px]")}
+              className={cn(selectClassName, "w-full sm:min-w-[160px]")}
             >
               <option value="all">All</option>
               {assignees.map((name) => (
@@ -123,85 +128,87 @@ export function TasksBoard({ tasks, projects, users, projectNames }: TasksBoardP
           <button
             type="button"
             onClick={clearFilters}
-            className="text-sm font-medium text-primary hover:underline"
+            className="text-left text-sm font-medium text-primary hover:underline sm:text-right"
           >
             Clear filters
           </button>
         )}
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-lg border border-border">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-muted/40">
-              <th className="w-10 px-4 py-3 text-left font-medium text-muted-foreground">#</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Title</th>
-              <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground md:table-cell">
-                Project
-              </th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
-              <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground sm:table-cell">
-                Priority
-              </th>
-              <th className="hidden px-4 py-3 text-left font-medium text-muted-foreground lg:table-cell">
-                Assignee
-              </th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Due Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTasks.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
-                  {tasks.length === 0 ? "No tasks yet. Create your first task." : "No tasks match the selected filters."}
-                </td>
+      <div className="mt-6">
+        <TaskMobileList
+          tasks={filteredTasks}
+          projectNames={projectNames}
+          emptyMessage={emptyMessage}
+        />
+
+        <div className="hidden overflow-x-auto rounded-lg border border-border md:block">
+          <table className="w-full min-w-[720px] text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/40">
+                <th className="w-10 px-4 py-3 text-left font-medium text-muted-foreground">#</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Title</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Project</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Priority</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Assignee</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Due Date</th>
               </tr>
-            ) : (
-              filteredTasks.map((task, index) => (
-                <tr
-                  key={task.id}
-                  className={cn(
-                    "border-b border-border last:border-0 hover:bg-muted/20",
-                    task.overdue && "bg-destructive/5",
-                  )}
-                >
-                  <td className="px-4 py-3.5 text-muted-foreground">{index + 1}</td>
-                  <td className="px-4 py-3.5 font-medium text-foreground">{task.title}</td>
-                  <td className="hidden px-4 py-3.5 text-muted-foreground md:table-cell">
-                    {projectNames[task.projectId] ?? "Unknown project"}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <TaskStatusSelect taskId={task.id} status={task.status} projectId={task.projectId} />
-                  </td>
-                  <td className="hidden px-4 py-3.5 sm:table-cell">
-                    <Badge
-                      variant="outline"
-                      className={cn("rounded-full font-medium", taskPriorityStyles[task.priority])}
-                    >
-                      {formatTaskPriority(task.priority)}
-                    </Badge>
-                  </td>
-                  <td className="hidden px-4 py-3.5 lg:table-cell">
-                    <div className="flex items-center gap-2">
-                      <div className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
-                        {taskInitials(task.assignee)}
-                      </div>
-                      <span className="text-foreground">{task.assignee}</span>
-                    </div>
-                  </td>
-                  <td
-                    className={cn(
-                      "px-4 py-3.5",
-                      task.overdue ? "font-medium text-destructive" : "text-muted-foreground",
-                    )}
-                  >
-                    {task.dueDate}
+            </thead>
+            <tbody>
+              {filteredTasks.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
+                    {emptyMessage}
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                filteredTasks.map((task, index) => (
+                  <tr
+                    key={task.id}
+                    className={cn(
+                      "border-b border-border last:border-0 hover:bg-muted/20",
+                      task.overdue && "bg-destructive/5",
+                    )}
+                  >
+                    <td className="px-4 py-3.5 text-muted-foreground">{index + 1}</td>
+                    <td className="px-4 py-3.5 font-medium text-foreground">{task.title}</td>
+                    <td className="px-4 py-3.5 text-muted-foreground">
+                      {projectNames[task.projectId] ?? "Unknown project"}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <TaskStatusSelect taskId={task.id} status={task.status} projectId={task.projectId} />
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <Badge
+                        variant="outline"
+                        className={cn("rounded-full font-medium", taskPriorityStyles[task.priority])}
+                      >
+                        {formatTaskPriority(task.priority)}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <div className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+                          {taskInitials(task.assignee)}
+                        </div>
+                        <span className="text-foreground">{task.assignee}</span>
+                      </div>
+                    </td>
+                    <td
+                      className={cn(
+                        "px-4 py-3.5",
+                        task.overdue ? "font-medium text-destructive" : "text-muted-foreground",
+                      )}
+                    >
+                      {task.dueDate}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <AllTasksFormDialog
