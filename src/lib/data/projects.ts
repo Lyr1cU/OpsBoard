@@ -3,10 +3,20 @@ import { prisma } from "@/lib/prisma"
 import { formatDisplayDate } from "@/lib/format"
 import type { ProjectListItem, ProjectStatus } from "@/types/domain"
 
-type ProjectWithTasks = Prisma.ProjectGetPayload<{
-  include: {
+type ProjectListRow = Prisma.ProjectGetPayload<{
+  select: {
+    id: true
+    name: true
+    clientName: true
+    description: true
+    status: true
+    createdAt: true
+    _count: { select: { tasks: true } }
     tasks: {
-      include: { assignee: { select: { name: true } } }
+      select: {
+        id: true
+        assignee: { select: { name: true } }
+      }
     }
   }
 }>
@@ -15,8 +25,7 @@ function mapProjectStatus(status: DbProjectStatus): ProjectStatus {
   return status
 }
 
-function mapProject(project: ProjectWithTasks): ProjectListItem {
-  const openTasks = project.tasks.filter((t) => t.status !== "DONE").length
+function mapProject(project: ProjectListRow): ProjectListItem {
   const members = [
     ...new Set(
       project.tasks
@@ -32,18 +41,37 @@ function mapProject(project: ProjectWithTasks): ProjectListItem {
     description: project.description ?? "",
     status: mapProjectStatus(project.status),
     createdAt: formatDisplayDate(project.createdAt),
-    taskCount: project.tasks.length,
-    openTasks,
+    taskCount: project._count.tasks,
+    openTasks: project.tasks.length,
     members,
   }
+}
+
+export async function listProjectOptions(): Promise<{ id: string; name: string; status: ProjectStatus }[]> {
+  return prisma.project.findMany({
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, status: true },
+  })
 }
 
 export async function listProjects(): Promise<ProjectListItem[]> {
   const projects = await prisma.project.findMany({
     orderBy: { createdAt: "desc" },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      clientName: true,
+      description: true,
+      status: true,
+      createdAt: true,
+      _count: { select: { tasks: true } },
+      // Only open tasks — enough for openTasks count + avatar names
       tasks: {
-        include: { assignee: { select: { name: true } } },
+        where: { status: { not: "DONE" } },
+        select: {
+          id: true,
+          assignee: { select: { name: true } },
+        },
       },
     },
   })
@@ -54,9 +82,20 @@ export async function listProjects(): Promise<ProjectListItem[]> {
 export async function getProjectById(id: string): Promise<ProjectListItem | null> {
   const project = await prisma.project.findUnique({
     where: { id },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      clientName: true,
+      description: true,
+      status: true,
+      createdAt: true,
+      _count: { select: { tasks: true } },
       tasks: {
-        include: { assignee: { select: { name: true } } },
+        where: { status: { not: "DONE" } },
+        select: {
+          id: true,
+          assignee: { select: { name: true } },
+        },
       },
     },
   })

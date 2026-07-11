@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { formatDisplayDate, formatRelativeDue, isTaskOverdue } from "@/lib/format"
+import { formatRelativeDue, isTaskOverdue } from "@/lib/format"
 
 export type DashboardStat = {
   label: string
@@ -44,36 +44,40 @@ function startOfToday() {
 export async function getDashboardData(): Promise<DashboardData> {
   const today = startOfToday()
 
-  const [activeProjects, openTasks, overdueTasks, inProgressTasks, statusGroups, upcomingTasks] =
-    await Promise.all([
-      prisma.project.count({ where: { status: "ACTIVE" } }),
-      prisma.task.count({ where: { status: { not: "DONE" } } }),
-      prisma.task.count({
-        where: {
-          status: { not: "DONE" },
-          dueDate: { lt: today },
-        },
-      }),
-      prisma.task.count({ where: { status: "IN_PROGRESS" } }),
-      prisma.task.groupBy({
-        by: ["status"],
-        _count: { _all: true },
-      }),
-      prisma.task.findMany({
-        where: {
-          status: { not: "DONE" },
-          dueDate: { not: null },
-        },
-        orderBy: { dueDate: "asc" },
-        take: 8,
-        include: {
-          assignee: { select: { name: true } },
-          project: { select: { name: true } },
-        },
-      }),
-    ])
+  const [activeProjects, statusGroups, upcomingTasks, overdueTasks] = await Promise.all([
+    prisma.project.count({ where: { status: "ACTIVE" } }),
+    prisma.task.groupBy({
+      by: ["status"],
+      _count: { _all: true },
+    }),
+    prisma.task.findMany({
+      where: {
+        status: { not: "DONE" },
+        dueDate: { not: null },
+      },
+      orderBy: { dueDate: "asc" },
+      take: 8,
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        dueDate: true,
+        assignee: { select: { name: true } },
+        project: { select: { name: true } },
+      },
+    }),
+    prisma.task.count({
+      where: {
+        status: { not: "DONE" },
+        dueDate: { lt: today },
+      },
+    }),
+  ])
 
   const statusCountMap = new Map(statusGroups.map((g) => [g.status, g._count._all]))
+  const todo = statusCountMap.get("TODO") ?? 0
+  const inProgress = statusCountMap.get("IN_PROGRESS") ?? 0
+  const openTasks = todo + inProgress
 
   const tasksByStatus: TaskStatusSlice[] = STATUS_SLICES.map(({ key, label, fill }) => ({
     status: label,
@@ -100,7 +104,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     },
     {
       label: "In Progress",
-      value: String(inProgressTasks),
+      value: String(inProgress),
       hint: "tasks being worked on",
     },
   ]
