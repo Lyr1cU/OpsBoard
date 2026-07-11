@@ -61,7 +61,7 @@ export function NotificationsMenu({ notifications }: NotificationsMenuProps) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-[min(100vw-2rem,22rem)] overflow-hidden rounded-lg border border-border bg-card shadow-lg"
+          className="fixed inset-x-4 top-[4.25rem] z-50 max-h-[min(24rem,calc(100dvh-5.5rem))] overflow-hidden rounded-lg border border-border bg-card shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[22rem] sm:max-h-none"
         >
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div>
@@ -88,7 +88,7 @@ export function NotificationsMenu({ notifications }: NotificationsMenuProps) {
               No overdue or soon-due tasks.
             </div>
           ) : (
-            <ul className="max-h-80 overflow-y-auto py-1">
+            <ul className="max-h-[min(20rem,calc(100dvh-10rem))] overflow-y-auto py-1 sm:max-h-80">
               {notifications.map((item) => (
                 <li key={item.id}>
                   <Link
