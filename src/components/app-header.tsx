@@ -1,16 +1,19 @@
 "use client"
 
-import { Search, Bell } from "lucide-react"
+import { Search } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { UserMenu } from "@/components/user-menu"
 import { MobileNav } from "@/components/mobile-nav"
+import { NotificationsMenu } from "@/components/notifications-menu"
+import type { AppNotification } from "@/lib/data/notifications"
 
 type AppHeaderProps = {
   email: string
   name: string
+  notifications: AppNotification[]
 }
 
-export function AppHeader({ email, name }: AppHeaderProps) {
+export function AppHeader({ email, name, notifications }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b border-border bg-card/80 px-4 backdrop-blur sm:px-6">
       <div className="flex min-w-0 items-center gap-2">
@@ -27,15 +30,7 @@ export function AppHeader({ email, name }: AppHeaderProps) {
 
       <div className="ml-auto flex items-center gap-2">
         <ThemeToggle />
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="relative flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-        >
-          <Bell className="size-5" />
-          <span className="absolute right-2 top-2 size-2 rounded-full bg-primary ring-2 ring-card" />
-        </button>
-
+        <NotificationsMenu notifications={notifications} />
         <UserMenu email={email} name={name} />
       </div>
     </header>
