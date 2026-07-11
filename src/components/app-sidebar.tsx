@@ -2,17 +2,10 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, FolderKanban, CheckSquare, BarChart3, Layers } from "lucide-react"
-import { cn } from "@/lib/utils"
-
+import { Layers } from "lucide-react"
+import { navItems } from "@/components/nav-items"
 import { taskInitials } from "@/components/task-display-utils"
-
-const nav = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/" },
-  { label: "Projects", icon: FolderKanban, href: "/projects" },
-  { label: "Tasks", icon: CheckSquare, href: "/tasks" },
-  { label: "Reports", icon: BarChart3, href: "/reports" },
-]
+import { cn } from "@/lib/utils"
 
 export function AppSidebar({ userName }: { userName: string }) {
   const pathname = usePathname()
@@ -27,8 +20,10 @@ export function AppSidebar({ userName }: { userName: string }) {
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 p-3">
-        <p className="px-3 pb-2 pt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">Workspace</p>
-        {nav.map((item) => {
+        <p className="px-3 pb-2 pt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Workspace
+        </p>
+        {navItems.map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)
           return (
             <Link
