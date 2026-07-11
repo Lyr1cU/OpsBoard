@@ -158,6 +158,8 @@ Do **not** commit `.env` — it is already in `.gitignore`.
 
 5. Deploy
 
+**Region:** `vercel.json` pins serverless functions to **Frankfurt (`fra1`)** — same region as Supabase `eu-central-1`, lower latency from Ukraine/EU.
+
 > **Important:** On Vercel use the **Transaction pooler** `DATABASE_URL`, not Direct connection (`db.xxx.supabase.co`).
 >
 > Supabase → **Connect** → **Transaction pooler** → copy URI. It should look like:
