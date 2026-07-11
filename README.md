@@ -1,208 +1,161 @@
 # OpsBoard
 
-Internal ops dashboard for a small digital agency team.  
-Pet-project / portfolio — see [opsboard-brief.md](./opsboard-brief.md) for full spec.
+**Live demo:** [https://opsboard-topaz.vercel.app](https://opsboard-topaz.vercel.app)  
+**Source code:** [https://github.com/Lyr1cU/OpsBoard](https://github.com/Lyr1cU/OpsBoard)
 
-## Stack
+Internal ops dashboard for a small digital agency — track projects, tasks, deadlines, and AI-generated weekly reports in one place.
 
-- Next.js 16 (App Router) + TypeScript
-- Tailwind CSS 4 + shadcn/ui
-- PostgreSQL + Prisma
-- **Supabase Auth** (Phase 1)
-- **Groq AI** (Phase 4 — weekly reports)
+Pet-project / portfolio. Full spec: [opsboard-brief.md](./opsboard-brief.md)
 
-## Getting started
+---
 
-### 1. Supabase project
+## For recruiters & reviewers
 
-1. Create a project at [supabase.com](https://supabase.com)
-2. **Project Settings → API** — copy **Project URL** (ends with `.supabase.co`, **without** `/rest/v1/`) and **anon public** key into `.env`  
-   Do **not** copy the URL from **Integrations → Data API** — that REST endpoint breaks Supabase Auth.
-3. For local dev, disable email confirmation: **Authentication → Providers → Email → Confirm email = off**
+### What is this?
 
-### 2. Database (Phase 2)
+OpsBoard is a **full-stack web application** (not a landing page or mockup). It simulates an internal tool a 3–8 person agency would use to answer:
 
-1. **Project Settings → Database → Connection string → URI**
-2. Copy the **Direct connection** string (port `5432`, host `db.<ref>.supabase.co`)
-3. Replace `[YOUR-PASSWORD]` with your database password and set in `.env`:
+- What projects are we running?
+- Who is working on what?
+- What is overdue?
+- What did the team finish this week?
 
-```env
-DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.xxx.supabase.co:5432/postgres
-```
+You open it in a **browser** — no install needed.
 
-**Windows / no IPv6:** Direct host often fails with `P1001`. In the **Connect** dialog switch to **Session pooler** (port `5432`, host `aws-0-<region>.pooler.supabase.com`) and use the username `postgres.<project-ref>`:
+### Tech at a glance
 
-```env
-DATABASE_URL=postgresql://postgres.xxx:YOUR_PASSWORD@aws-0-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require
-```
+| Layer | Stack |
+|-------|--------|
+| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui |
+| Backend | Next.js Server Actions + API Routes (Vercel serverless) |
+| Database | PostgreSQL (Supabase) + Prisma ORM |
+| Auth | Supabase Auth (email/password, cookie sessions) |
+| AI | Groq API — weekly summary from completed tasks |
+| Deploy | Vercel (Frankfurt region) |
 
-4. Push schema and seed demo data:
+### Try it in ~2 minutes
+
+1. Open **[opsboard-topaz.vercel.app](https://opsboard-topaz.vercel.app)**
+2. Click **Register** — any email + password (6+ chars). No email confirmation required.
+3. After login you land on the **Dashboard** — live stats from the database.
+4. Suggested click path:
+
+| Step | Page | What to check |
+|------|------|----------------|
+| 1 | **Projects** | 5 demo client projects (seed data). Create a new one with **New project**. |
+| 2 | **Project detail** | Open any project → task list → **Add task** → change **Status** dropdown. |
+| 3 | **Tasks** | All tasks, filters by project / status / assignee. |
+| 4 | **Reports** | **Generate weekly report** — AI summary of tasks marked Done in the last 7 days. |
+| 5 | **Bell icon** (header) | Notifications for overdue & soon-due tasks. |
+
+5. **Sign out** when done (header, top right).
+
+Demo data is shared — everyone sees the same seeded projects after registering.
+
+### What you can ask me about in an interview
+
+- Why Next.js App Router + Server Components vs client-only SPA
+- Auth flow: Supabase JWT → cookies → protected routes (middleware)
+- Prisma schema: User, Project, Task, Report relations
+- How dashboard aggregations are computed from PostgreSQL
+- Groq prompt design for weekly reports
+- Deploy: Vercel + Supabase pooler, env vars, auth redirect URLs
+
+---
+
+## Features
+
+- **Auth** — register, login, logout; dashboard routes require a session
+- **Projects** — list, filter (Active / Archived), create, archive, detail view
+- **Tasks** — CRUD via UI, status change, filters, mobile card layout
+- **Dashboard** — active projects, open/overdue tasks, status chart, upcoming deadlines
+- **AI Reports** — Groq-generated weekly summary, saved to database
+- **Notifications** — overdue and due-soon tasks in the header bell
+- **Responsive** — desktop sidebar + mobile hamburger menu
+
+---
+
+## Routes
+
+| Route | Description |
+|-------|-------------|
+| `/login`, `/register` | Auth |
+| `/` | Dashboard |
+| `/projects`, `/projects/[id]` | Projects list & detail |
+| `/tasks` | All tasks + filters |
+| `/reports` | AI weekly reports history |
+
+---
+
+## Local development
+
+### Prerequisites
+
+- Node.js 20+
+- Supabase project (free tier)
+- Groq API key (free, for AI reports)
+
+### Setup
 
 ```bash
-npm run db:push
-npm run db:seed
-```
-
-### 3. Environment
-
-```bash
+git clone https://github.com/Lyr1cU/OpsBoard.git
+cd OpsBoard
 cp .env.example .env
+npm install
 ```
 
-Fill in at minimum:
+Fill `.env` — see [.env.example](./.env.example). Minimum:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-DATABASE_URL=postgresql://postgres:...@db.xxx.supabase.co:5432/postgres
-GROQ_API_KEY=gsk_...          # https://console.groq.com/keys
+DATABASE_URL=postgresql://postgres.xxx:...@aws-0-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require
+GROQ_API_KEY=gsk_...
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-### 4. Run
+**Supabase tips:**
+
+- Use **Project URL** from Settings → API (not `/rest/v1/` from Data API)
+- On Windows, Direct connection often fails — use **Session pooler** locally, **Transaction pooler** (port `6543`) on Vercel
+- Disable email confirmation for dev: Authentication → Email → Confirm email = off
 
 ```bash
-npm install
+npm run db:push
+npm run db:seed
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to `/login`.
+Open [http://localhost:3000](http://localhost:3000)
 
-## Auth (Phase 1)
+### Scripts
 
-- Register at `/register`
-- Sign in at `/login`
-- Dashboard routes require a session (Supabase cookies, not localStorage)
-- **Sign out** button in the header
-- On first login, your Supabase user is synced into the Prisma `User` table
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm run db:push` | Push Prisma schema to DB |
+| `npm run db:seed` | Seed demo data |
+| `npm run db:studio` | Prisma Studio |
 
-## Projects & Tasks (Phase 2)
+---
 
-- `/projects` — list, filter (All / Active / Archived), create project
-- `/projects/[id]` — project detail, add tasks, change status, archive/restore
-- `/tasks` — all tasks with filters + status dropdown
-- REST API: `/api/projects`, `/api/tasks` (same data layer)
+## Deploy (Vercel)
 
-## Dashboard (Phase 3)
+Already deployed at [opsboard-topaz.vercel.app](https://opsboard-topaz.vercel.app).
 
-- `/` — live stats from PostgreSQL: active projects, open/overdue/in-progress tasks
-- Pie chart by task status (To Do / In Progress / Done)
-- Upcoming deadlines list (sorted by due date, overdue highlighted)
+To redeploy from your fork:
 
-## AI Reports (Phase 4)
+1. Import repo on [vercel.com/new](https://vercel.com/new)
+2. Framework: **Next.js**
+3. Set env vars (same as `.env`, with `NEXT_PUBLIC_APP_URL=https://your-app.vercel.app`)
+4. Supabase → Authentication → URL Configuration → add your Vercel URL
 
-1. Get a free API key at [console.groq.com](https://console.groq.com/keys)
-2. Add `GROQ_API_KEY` to `.env`
-3. Open `/reports` → **Generate weekly report**
-4. Takes tasks marked **Done** in the last 7 days → Groq summary in English → saved to `Report` table
+`vercel.json` pins functions to **Frankfurt (`fra1`)** — same region as Supabase `eu-central-1`.
 
-## Routes
-
-| Route | Status |
-|-------|--------|
-| `/login`, `/register` | Supabase Auth |
-| `/` | Dashboard (PostgreSQL aggregations) |
-| `/projects`, `/projects/[id]` | PostgreSQL via Prisma |
-| `/tasks` | PostgreSQL via Prisma |
-| `/reports` | AI weekly reports (Groq + PostgreSQL) |
-
-## Scripts
-
-- `npm run dev` — development server
-- `npm run build` — production build
-- `npm run db:generate` — generate Prisma client
-- `npm run db:push` — push schema to database (needs `DATABASE_URL`)
-- `npm run db:seed` — seed demo projects, tasks, team members
-- `npm run db:studio` — Prisma Studio
+---
 
 ## Design
 
 UI mockups: `design/screenshots/`  
 v0 reference: `design/v0-mockups/`
-
----
-
-## Deploy (Vercel + GitHub)
-
-OpsBoard is built for [Vercel](https://vercel.com) + the same Supabase project you use locally.  
-One database = demo seed data is visible to everyone who signs in.
-
-### 1. Push to GitHub
-
-```bash
-git init
-git add .
-git commit -m "Initial commit: OpsBoard MVP"
-git branch -M main
-git remote add origin https://github.com/YOUR_USER/opsboard.git
-git push -u origin main
-```
-
-Do **not** commit `.env` — it is already in `.gitignore`.
-
-### 2. Import on Vercel
-
-1. [vercel.com/new](https://vercel.com/new) → Import your GitHub repo
-2. Framework: **Next.js** (auto-detected)
-3. Build command: `npm run build` (default)
-4. Add **Environment Variables** (Production + Preview):
-
-| Variable | Value |
-|----------|--------|
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://xxx.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon key from Supabase |
-| `DATABASE_URL` | **Transaction pooler** URI (port `6543`, see below) |
-| `GROQ_API_KEY` | `gsk_...` |
-| `GROQ_MODEL` | `llama-3.1-8b-instant` |
-| `NEXT_PUBLIC_APP_URL` | `https://your-app.vercel.app` |
-
-5. Deploy
-
-**Region:** `vercel.json` pins serverless functions to **Frankfurt (`fra1`)** — same region as Supabase `eu-central-1`, lower latency from Ukraine/EU.
-
-> **Important:** On Vercel use the **Transaction pooler** `DATABASE_URL`, not Direct connection (`db.xxx.supabase.co`).
->
-> Supabase → **Connect** → **Transaction pooler** → copy URI. It should look like:
-> ```
-> postgresql://postgres.YOUR_REF:PASSWORD@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&sslmode=require
-> ```
-> Username must be `postgres.<project-ref>`, port **6543**.
-
-### 3. Supabase Auth (production URLs)
-
-In Supabase → **Authentication → URL Configuration**:
-
-- **Site URL:** `https://your-app.vercel.app`
-- **Redirect URLs:** add `https://your-app.vercel.app/**`
-
-Keep **Confirm email = off** so recruiters can register and try the app immediately.
-
-### 4. Database (one-time, if not done yet)
-
-From your machine (with `DATABASE_URL` in `.env`):
-
-```bash
-npm run db:push
-npm run db:seed
-```
-
-Production uses the same Supabase Postgres — no separate prod DB needed for a portfolio demo.
-
-### 5. Put the live link in README
-
-After deploy, add at the top of this file:
-
-```markdown
-**Live demo:** https://your-app.vercel.app
-```
-
-Recruiters can **Register** → explore seeded projects/tasks → try **Generate weekly report** on `/reports`.
-
-### Troubleshooting
-
-| Problem | Fix |
-|---------|-----|
-| Login works locally, not on Vercel | Check Supabase Site URL + Redirect URLs |
-| `P1001` / DB errors on Vercel | Use Session pooler `DATABASE_URL` |
-| Empty projects list | Run `npm run db:seed` against your Supabase DB |
-| AI reports fail | Add `GROQ_API_KEY` in Vercel env vars |
