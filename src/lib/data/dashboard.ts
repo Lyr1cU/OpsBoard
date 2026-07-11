@@ -35,21 +35,26 @@ const STATUS_SLICES: { key: "TODO" | "IN_PROGRESS" | "DONE"; label: string; fill
   { key: "DONE", label: "Done", fill: "var(--chart-1)" },
 ]
 
-function startOfToday() {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return today
+type TaskAggregateRow = {
+  todo: bigint
+  in_progress: bigint
+  done: bigint
+  overdue: bigint
 }
 
 export async function getDashboardData(): Promise<DashboardData> {
-  const today = startOfToday()
-
-  const [activeProjects, statusGroups, upcomingTasks, overdueTasks] = await Promise.all([
-    prisma.project.count({ where: { status: "ACTIVE" } }),
-    prisma.task.groupBy({
-      by: ["status"],
-      _count: { _all: true },
-    }),
+  // Two DB round-trips total: one aggregate over tasks (+active projects),
+  // one for the upcoming-deadlines list.
+  const [aggregateRows, upcomingTasks] = await Promise.all([
+    prisma.$queryRaw<(TaskAggregateRow & { active_projects: bigint })[]>`
+      SELECT
+        count(*) FILTER (WHERE t.status = 'TODO') AS todo,
+        count(*) FILTER (WHERE t.status = 'IN_PROGRESS') AS in_progress,
+        count(*) FILTER (WHERE t.status = 'DONE') AS done,
+        count(*) FILTER (WHERE t.status <> 'DONE' AND t."dueDate" < now()) AS overdue,
+        (SELECT count(*) FROM "Project" WHERE status = 'ACTIVE') AS active_projects
+      FROM "Task" t
+    `,
     prisma.task.findMany({
       where: {
         status: { not: "DONE" },
@@ -66,18 +71,21 @@ export async function getDashboardData(): Promise<DashboardData> {
         project: { select: { name: true } },
       },
     }),
-    prisma.task.count({
-      where: {
-        status: { not: "DONE" },
-        dueDate: { lt: today },
-      },
-    }),
   ])
 
-  const statusCountMap = new Map(statusGroups.map((g) => [g.status, g._count._all]))
-  const todo = statusCountMap.get("TODO") ?? 0
-  const inProgress = statusCountMap.get("IN_PROGRESS") ?? 0
+  const row = aggregateRows[0]
+  const todo = Number(row?.todo ?? 0)
+  const inProgress = Number(row?.in_progress ?? 0)
+  const done = Number(row?.done ?? 0)
+  const overdueTasks = Number(row?.overdue ?? 0)
+  const activeProjects = Number(row?.active_projects ?? 0)
   const openTasks = todo + inProgress
+
+  const statusCountMap = new Map<string, number>([
+    ["TODO", todo],
+    ["IN_PROGRESS", inProgress],
+    ["DONE", done],
+  ])
 
   const tasksByStatus: TaskStatusSlice[] = STATUS_SLICES.map(({ key, label, fill }) => ({
     status: label,
