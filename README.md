@@ -151,14 +151,20 @@ Do **not** commit `.env` — it is already in `.gitignore`.
 |----------|--------|
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://xxx.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon key from Supabase |
-| `DATABASE_URL` | **Session pooler** URI (same as local `.env`) |
+| `DATABASE_URL` | **Transaction pooler** URI (port `6543`, see below) |
 | `GROQ_API_KEY` | `gsk_...` |
 | `GROQ_MODEL` | `llama-3.1-8b-instant` |
 | `NEXT_PUBLIC_APP_URL` | `https://your-app.vercel.app` |
 
 5. Deploy
 
-> **Important:** On Vercel use the **Session pooler** `DATABASE_URL`, not Direct connection (`db.xxx.supabase.co`).
+> **Important:** On Vercel use the **Transaction pooler** `DATABASE_URL`, not Direct connection (`db.xxx.supabase.co`).
+>
+> Supabase → **Connect** → **Transaction pooler** → copy URI. It should look like:
+> ```
+> postgresql://postgres.YOUR_REF:PASSWORD@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&sslmode=require
+> ```
+> Username must be `postgres.<project-ref>`, port **6543**.
 
 ### 3. Supabase Auth (production URLs)
 
