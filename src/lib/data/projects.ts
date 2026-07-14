@@ -1,6 +1,11 @@
+/**
+ * Project data access layer — scoped to projects the user can access.
+ */
+
 import type { Prisma, ProjectStatus as DbProjectStatus } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { formatDisplayDate } from "@/lib/format"
+import { ensureOwnerMembership } from "@/lib/data/memberships"
 import type { ProjectListItem, ProjectStatus } from "@/types/domain"
 
 type ProjectListRow = Prisma.ProjectGetPayload<{
@@ -11,6 +16,7 @@ type ProjectListRow = Prisma.ProjectGetPayload<{
     description: true
     status: true
     createdAt: true
+    ownerId: true
     _count: { select: { tasks: true } }
     tasks: {
       select: {
@@ -47,59 +53,50 @@ function mapProject(project: ProjectListRow): ProjectListItem {
   }
 }
 
-export async function listProjectOptions(): Promise<{ id: string; name: string; status: ProjectStatus }[]> {
+const projectSelect = {
+  id: true,
+  name: true,
+  clientName: true,
+  description: true,
+  status: true,
+  createdAt: true,
+  ownerId: true,
+  _count: { select: { tasks: true } },
+  tasks: {
+    where: { status: { not: "DONE" } },
+    select: {
+      id: true,
+      assignee: { select: { name: true } },
+    },
+  },
+} as const
+
+export async function listProjectOptions(
+  accessibleProjectIds: string[],
+): Promise<{ id: string; name: string; status: ProjectStatus }[]> {
+  if (accessibleProjectIds.length === 0) return []
   return prisma.project.findMany({
+    where: { id: { in: accessibleProjectIds } },
     orderBy: { name: "asc" },
     select: { id: true, name: true, status: true },
   })
 }
 
-export async function listProjects(): Promise<ProjectListItem[]> {
+export async function listProjects(accessibleProjectIds: string[]): Promise<ProjectListItem[]> {
+  if (accessibleProjectIds.length === 0) return []
   const projects = await prisma.project.findMany({
+    where: { id: { in: accessibleProjectIds } },
     orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      name: true,
-      clientName: true,
-      description: true,
-      status: true,
-      createdAt: true,
-      _count: { select: { tasks: true } },
-      // Only open tasks — enough for openTasks count + avatar names
-      tasks: {
-        where: { status: { not: "DONE" } },
-        select: {
-          id: true,
-          assignee: { select: { name: true } },
-        },
-      },
-    },
+    select: projectSelect,
   })
-
   return projects.map(mapProject)
 }
 
 export async function getProjectById(id: string): Promise<ProjectListItem | null> {
   const project = await prisma.project.findUnique({
     where: { id },
-    select: {
-      id: true,
-      name: true,
-      clientName: true,
-      description: true,
-      status: true,
-      createdAt: true,
-      _count: { select: { tasks: true } },
-      tasks: {
-        where: { status: { not: "DONE" } },
-        select: {
-          id: true,
-          assignee: { select: { name: true } },
-        },
-      },
-    },
+    select: projectSelect,
   })
-
   return project ? mapProject(project) : null
 }
 
@@ -107,14 +104,18 @@ export async function createProject(input: {
   name: string
   clientName?: string
   description?: string
+  ownerId: string
 }) {
-  return prisma.project.create({
+  const project = await prisma.project.create({
     data: {
       name: input.name.trim(),
       clientName: input.clientName?.trim() || null,
       description: input.description?.trim() || null,
+      ownerId: input.ownerId,
     },
   })
+  await ensureOwnerMembership(project.id, input.ownerId)
+  return project
 }
 
 export async function updateProject(
@@ -139,4 +140,8 @@ export async function updateProject(
 
 export async function archiveProject(id: string) {
   return updateProject(id, { status: "ARCHIVED" })
+}
+
+export async function deleteProject(id: string) {
+  return prisma.project.delete({ where: { id } })
 }

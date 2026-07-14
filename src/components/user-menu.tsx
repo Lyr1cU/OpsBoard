@@ -1,5 +1,11 @@
 "use client"
 
+/**
+ * Compact account summary and sign-out control in the dashboard header.
+ *
+ * Displays the user's initials avatar and identity on sm+ screens. Sign-out is
+ * implemented as a server action form submission for a full session teardown.
+ */
 import { LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { taskInitials } from "@/components/task-display-utils"
@@ -17,6 +23,7 @@ export function UserMenu({ email, name }: UserMenuProps) {
         <div className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
           {taskInitials(name)}
         </div>
+        {/* Name and email hidden on very small screens to reduce clutter */}
         <div className="hidden text-left sm:block">
           <p className="text-sm font-medium leading-tight text-foreground">{name}</p>
           <p className="text-xs leading-tight text-muted-foreground">{email}</p>

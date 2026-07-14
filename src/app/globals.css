@@ -1,10 +1,20 @@
+/**
+ * Global stylesheet for OpsBoard.
+ *
+ * Imports Tailwind v4, animation utilities, and shadcn/ui tokens. Defines the
+ * design-token palette (light/dark), maps tokens into @theme for Tailwind, and
+ * includes a few component-specific overrides (mobile nav drawer).
+ */
+
+/* --- Framework & component library imports --- */
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
-/* opsboard theme */
 
+/* --- Tailwind dark-mode variant (class-based .dark on an ancestor) --- */
 @custom-variant dark (&:is(.dark *));
 
+/* --- Tailwind theme bridge: maps CSS custom properties to utility class names --- */
 @theme inline {
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
@@ -47,6 +57,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* --- Light theme: default palette (oklch for perceptually even contrast) --- */
 :root {
   color-scheme: light;
   --background: oklch(0.985 0.002 250);
@@ -83,6 +94,7 @@
   --sidebar-ring: oklch(0.53 0.17 258);
 }
 
+/* --- Dark theme: applied when .dark is present on an ancestor element --- */
 .dark {
   color-scheme: dark;
   --background: oklch(0.2 0.015 260);
@@ -118,6 +130,7 @@
   --sidebar-ring: oklch(0.65 0.16 258);
 }
 
+/* --- Base element defaults (borders, focus rings, body colors) --- */
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -127,7 +140,7 @@
   }
 }
 
-/* Mobile nav drawer: pin to left edge instead of centered modal */
+/* --- Mobile navigation drawer: full-height left-edge panel (not centered modal) --- */
 dialog.mobile-nav-drawer {
   margin: 0;
   inset: 0 auto 0 0;

@@ -1,5 +1,10 @@
 "use client"
 
+/**
+ * Registration form wired to the {@link register} server action.
+ *
+ * Collects name, email, password, and account type (Team Lead / Member).
+ */
 import Link from "next/link"
 import { useActionState } from "react"
 import { AuthCard } from "@/components/auth/auth-card"
@@ -9,6 +14,9 @@ import { register } from "@/lib/actions/auth"
 import type { AuthActionState } from "@/lib/actions/auth-types"
 
 const initialState: AuthActionState = {}
+
+const selectClassName =
+  "h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"
 
 export function RegisterForm() {
   const [state, formAction, pending] = useActionState(register, initialState)
@@ -40,6 +48,19 @@ export function RegisterForm() {
           autoComplete="new-password"
           required
         />
+
+        <div className="space-y-2">
+          <label htmlFor="role" className="text-sm font-medium text-foreground">
+            Account type
+          </label>
+          <select id="role" name="role" defaultValue="MEMBER" className={selectClassName} required>
+            <option value="ADMIN">Team Lead</option>
+            <option value="MEMBER">Member</option>
+          </select>
+          <p className="text-xs text-muted-foreground">
+            Team Leads can create projects. Members join projects when invited by email.
+          </p>
+        </div>
 
         {state.error && (
           <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">

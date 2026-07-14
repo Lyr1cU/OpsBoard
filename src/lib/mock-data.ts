@@ -1,7 +1,16 @@
+/**
+ * Static mock data from early OpsBoard UI prototypes (v0 design explorations).
+ *
+ * NOT used by the production app under src/ — the live dashboard reads from
+ * Prisma via src/lib/data/*. This file remains for design/v0-mockups/ reference
+ * pages that still import these fixtures. Safe to delete once mockups are retired.
+ */
+
 export type ProjectStatus = "ACTIVE" | "ARCHIVED"
 export type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE"
 export type TaskPriority = "LOW" | "MEDIUM" | "HIGH"
 
+/** Legacy project card shape — string dates and precomputed counts for static demos. */
 export type Project = {
   id: string
   name: string
@@ -15,6 +24,7 @@ export type Project = {
   updated: string
 }
 
+/** Legacy task row — overdue flag baked in for demo highlighting. */
 export type Task = {
   id: string
   projectId: string
@@ -283,22 +293,27 @@ export const tasks: Task[] = [
   },
 ]
 
+/** Lookup helper for mock project detail pages. */
 export function getProjectById(id: string): Project | undefined {
   return projects.find((p) => p.id === id)
 }
 
+/** Filter tasks belonging to one mock project. */
 export function getTasksByProjectId(projectId: string): Task[] {
   return tasks.filter((t) => t.projectId === projectId)
 }
 
+// Subset of task IDs used by the original "all tasks" board mockup.
 const allTasksBoardIds = ["t11", "t12", "t13", "t14", "t15", "t16", "t17", "t18", "t19"] as const
 
+/** Return the fixed slice of tasks shown on the v0 tasks board demo. */
 export function getAllTasksForBoard(): Task[] {
   return allTasksBoardIds
     .map((id) => tasks.find((t) => t.id === id))
     .filter((t): t is Task => t !== undefined)
 }
 
+/** Resolve project display name from mock id — "Unknown project" when missing. */
 export function getProjectNameById(projectId: string): string {
   return projects.find((p) => p.id === projectId)?.name ?? "Unknown project"
 }
@@ -366,6 +381,7 @@ export type Stat = {
   hint: string
 }
 
+/** Dashboard KPI cards — static numbers for design previews only. */
 export const stats: Stat[] = [
   { label: "Active Projects", value: "4", delta: "+1", trend: "up", hint: "vs. last month" },
   { label: "Open Tasks", value: "44", delta: "+8", trend: "up", hint: "across all projects" },
@@ -379,6 +395,7 @@ export type TaskStatusSlice = {
   fill: string
 }
 
+/** Chart segments for the tasks-by-status donut in v0 mockups. */
 export const tasksByStatus: TaskStatusSlice[] = [
   { status: "Completed", count: 128, fill: "var(--chart-1)" },
   { status: "In Progress", count: 44, fill: "var(--chart-2)" },
@@ -395,6 +412,7 @@ export type Deadline = {
   overdue: boolean
 }
 
+/** Upcoming deadlines widget fixtures — relative strings ("Yesterday", "In 3 days"). */
 export const deadlines: Deadline[] = [
   {
     id: "d1",

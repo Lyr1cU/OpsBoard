@@ -5,6 +5,14 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import type { ProjectListItem } from "@/types/domain"
 
+/**
+ * Summary card for a single project on the projects index page.
+ *
+ * The entire card is a link to the project detail view. Surfaces status,
+ * task counts, and a stacked avatar row for assigned members.
+ */
+
+/** Local initials helper for member avatars (two characters max). */
 function initials(name: string) {
   return name
     .split(" ")
@@ -13,6 +21,7 @@ function initials(name: string) {
     .join("")
 }
 
+/** Rotating background tones so adjacent member avatars remain distinguishable. */
 const avatarTones = [
   "bg-primary/10 text-primary",
   "bg-secondary text-secondary-foreground",
@@ -31,6 +40,7 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
           <h3 className="truncate text-base font-semibold text-card-foreground">{project.name}</h3>
           <p className="truncate text-sm text-muted-foreground">{project.client}</p>
         </div>
+        {/* Placeholder overflow menu — visible on card hover for future actions */}
         <button
           type="button"
           aria-label="Project options"
@@ -65,6 +75,7 @@ export function ProjectCard({ project }: { project: ProjectListItem }) {
           )}
         </div>
 
+        {/* Show up to three member avatars; overflow rendered as +N */}
         <div className="flex -space-x-2">
           {project.members.slice(0, 3).map((m, i) => (
             <div

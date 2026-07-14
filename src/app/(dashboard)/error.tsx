@@ -1,3 +1,9 @@
+/**
+ * Dashboard route group error boundary.
+ *
+ * Client component invoked when a server or client error bubbles up within the
+ * dashboard segment. Offers retry (re-render) and a fallback link to login.
+ */
 "use client"
 
 import { useEffect } from "react"
@@ -9,6 +15,7 @@ type DashboardErrorProps = {
 }
 
 export default function DashboardError({ error, reset }: DashboardErrorProps) {
+  // Log the full error in the browser console for debugging.
   useEffect(() => {
     console.error("Dashboard error:", error)
   }, [error])
@@ -20,6 +27,7 @@ export default function DashboardError({ error, reset }: DashboardErrorProps) {
         The page failed to load. This is often a database connection issue. Try again, or sign out and
         sign back in.
       </p>
+      {/* Next.js may attach an opaque digest for server-side errors */}
       {error.digest && (
         <p className="font-mono text-xs text-muted-foreground">Error: {error.digest}</p>
       )}

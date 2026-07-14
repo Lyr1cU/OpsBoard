@@ -1,3 +1,8 @@
+/**
+ * Badge component — sourced from shadcn/ui.
+ *
+ * Small status label built on @base-ui/react useRender with CVA variants.
+ */
 import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"

@@ -1,3 +1,9 @@
+/**
+ * Shared card shell for unauthenticated login and registration pages.
+ *
+ * Centers the OpsBoard brand mark, page title, and child form content inside a
+ * constrained card layout used by both auth flows.
+ */
 import Link from "next/link"
 import type { ReactNode } from "react"
 import { Layers } from "lucide-react"

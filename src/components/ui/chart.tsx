@@ -1,12 +1,19 @@
 "use client"
 
+/**
+ * Chart primitives — sourced from shadcn/ui (Recharts integration).
+ *
+ * Wraps Recharts with theme-aware CSS variables, a shared config context, and
+ * styled tooltip/legend components. Used by dashboard visualizations such as
+ * TasksStatusChart.
+ */
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 import type { TooltipValueType } from "recharts"
 
 import { cn } from "@/lib/utils"
 
-// Format: { THEME_NAME: CSS_SELECTOR }
+// Maps theme names to CSS selectors for injecting chart color variables
 const THEMES = { light: "", dark: ".dark" } as const
 
 const INITIAL_DIMENSION = { width: 320, height: 200 } as const
@@ -39,6 +46,7 @@ function useChart() {
   return context
 }
 
+/** Responsive chart wrapper that provides config context and theme styles. */
 function ChartContainer({
   id,
   className,
@@ -81,6 +89,7 @@ function ChartContainer({
   )
 }
 
+/** Injects --color-* CSS variables from ChartConfig for light and dark themes. */
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(
     ([, config]) => config.theme ?? config.color
@@ -116,6 +125,7 @@ ${colorConfig
 
 const ChartTooltip = RechartsPrimitive.Tooltip
 
+/** Themed tooltip content that resolves labels/icons from ChartConfig. */
 function ChartTooltipContent({
   active,
   payload,
@@ -327,6 +337,7 @@ function ChartLegendContent({
   )
 }
 
+/** Resolves a chart config entry from Recharts payload metadata. */
 function getPayloadConfigFromPayload(
   config: ChartConfig,
   payload: unknown,

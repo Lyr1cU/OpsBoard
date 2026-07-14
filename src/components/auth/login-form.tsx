@@ -1,5 +1,11 @@
 "use client"
 
+/**
+ * Sign-in form wired to the {@link login} server action.
+ *
+ * Uses React 19 `useActionState` for progressive enhancement: the form works
+ * without JavaScript and surfaces server-side validation errors inline.
+ */
 import Link from "next/link"
 import { useActionState } from "react"
 import { AuthCard } from "@/components/auth/auth-card"

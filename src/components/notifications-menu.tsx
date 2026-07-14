@@ -1,7 +1,15 @@
 "use client"
 
+/**
+ * Bell icon dropdown surfacing overdue and soon-due task alerts.
+ *
+ * Notifications are pre-computed on the server and passed in as props. The menu
+ * dismisses on outside click or Escape and deep-links each item to the
+ * relevant task context.
+ */
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { AlertTriangle, Bell, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { AppNotification } from "@/lib/data/notifications"
@@ -13,9 +21,11 @@ type NotificationsMenuProps = {
 export function NotificationsMenu({ notifications }: NotificationsMenuProps) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
+  const reduceMotion = useReducedMotion()
   const count = notifications.length
   const overdueCount = notifications.filter((n) => n.kind === "overdue").length
 
+  // Close popover when clicking outside or pressing Escape
   useEffect(() => {
     if (!open) return
 
@@ -51,6 +61,7 @@ export function NotificationsMenu({ notifications }: NotificationsMenuProps) {
         )}
       >
         <Bell className="size-5" />
+        {/* Badge caps at 9+ for overflow readability */}
         {count > 0 && (
           <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-white ring-2 ring-card">
             {count > 9 ? "9+" : count}
@@ -58,11 +69,16 @@ export function NotificationsMenu({ notifications }: NotificationsMenuProps) {
         )}
       </button>
 
-      {open && (
-        <div
-          role="menu"
-          className="fixed inset-x-4 top-[4.25rem] z-50 max-h-[min(24rem,calc(100dvh-5.5rem))] overflow-hidden rounded-lg border border-border bg-card shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[22rem] sm:max-h-none"
-        >
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            role="menu"
+            initial={reduceMotion ? false : { opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? undefined : { opacity: 0, y: -4 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-x-4 top-[4.25rem] z-50 max-h-[min(24rem,calc(100dvh-5.5rem))] overflow-hidden rounded-lg border border-border bg-card shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-[22rem] sm:max-h-none"
+          >
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div>
               <p className="text-sm font-semibold text-foreground">Notifications</p>
@@ -128,8 +144,9 @@ export function NotificationsMenu({ notifications }: NotificationsMenuProps) {
               ))}
             </ul>
           )}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

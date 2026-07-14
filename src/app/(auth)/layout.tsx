@@ -1,3 +1,9 @@
+/**
+ * Layout for unauthenticated routes (login, register).
+ *
+ * Centers auth forms on a muted full-viewport background. Does not include
+ * dashboard chrome (sidebar, header) so the auth experience stays minimal.
+ */
 import type { ReactNode } from "react"
 
 export default function AuthLayout({ children }: { children: ReactNode }) {

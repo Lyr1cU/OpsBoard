@@ -1,3 +1,9 @@
+/**
+ * Card compound components — sourced from shadcn/ui.
+ *
+ * Provides Card, CardHeader, CardTitle, CardDescription, CardContent,
+ * CardFooter, and CardAction primitives for consistent surface layouts.
+ */
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

@@ -1,3 +1,7 @@
+// OpsBoard database schema — single source of truth for PostgreSQL structure.
+// Prisma generates a type-safe client (see src/lib/prisma.ts) used by server actions,
+// API routes, and seed scripts. Models mirror the domain types in src/types/domain.ts.
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,9 +11,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Account type chosen at register: ADMIN = Team Lead (can create projects), MEMBER cannot.
 enum Role {
   ADMIN
   MEMBER
+}
+
+// Role inside a specific project (Variant A Lead vs Member powers for that project).
+enum ProjectMemberRole {
+  PROJECT_LEAD
+  PROJECT_MEMBER
 }
 
 enum ProjectStatus {
@@ -36,8 +47,11 @@ model User {
   role      Role     @default(MEMBER)
   createdAt DateTime @default(now())
 
-  assignedTasks Task[]   @relation("TaskAssignee")
-  reports       Report[]
+  assignedTasks   Task[]          @relation("TaskAssignee")
+  reports         Report[]
+  activities      Activity[]
+  ownedProjects   Project[]       @relation("ProjectOwner")
+  projectMembers  ProjectMember[]
 }
 
 model Project {
@@ -47,9 +61,30 @@ model Project {
   status      ProjectStatus @default(ACTIVE)
   clientName  String?
   createdAt   DateTime      @default(now())
+  // Optional during v3 migration; seed/app always set owner. Enforce in app layer.
+  ownerId     String?
 
+  owner   User?           @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   tasks   Task[]
   reports Report[]
+  members ProjectMember[]
+
+  @@index([ownerId])
+}
+
+model ProjectMember {
+  id        String            @id @default(cuid())
+  projectId String
+  userId    String
+  role      ProjectMemberRole @default(PROJECT_MEMBER)
+  createdAt DateTime          @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([userId])
+  @@index([projectId])
 }
 
 model Task {
@@ -75,12 +110,30 @@ model Task {
 
 model Report {
   id          String   @id @default(cuid())
+  // Optional during migration; new reports always require a project.
   projectId   String?
   weekStart   DateTime
   content     String
   createdAt   DateTime @default(now())
   createdById String
 
-  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
   createdBy User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model Activity {
+  id         String   @id @default(cuid())
+  actorId    String
+  action     String
+  entityType String
+  entityId   String?
+  meta       Json?
+  createdAt  DateTime @default(now())
+
+  actor User @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([actorId])
 }

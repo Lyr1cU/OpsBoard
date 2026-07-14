@@ -1,9 +1,19 @@
+/**
+ * Database seed script for OpsBoard v3.
+ *
+ * Maya Chen is ADMIN (Team Lead) and owns all demo projects.
+ * Other seed users are MEMBER accounts and join active projects as PROJECT_MEMBER.
+ * Re-running is idempotent: users/projects upsert; memberships ensured; tasks upsert by title.
+ */
+
 import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
+const MAYA_EMAIL = "maya.chen@studio.co"
+
 const teamMembers = [
-  { email: "maya.chen@studio.co", name: "Maya Chen" },
+  { email: MAYA_EMAIL, name: "Maya Chen" },
   { email: "devin.park@studio.co", name: "Devin Park" },
   { email: "aisha.rahman@studio.co", name: "Aisha Rahman" },
   { email: "leo.martins@studio.co", name: "Leo Martins" },
@@ -138,30 +148,57 @@ async function main() {
   console.log("Seeding database…")
 
   for (const member of teamMembers) {
+    const role = member.email === MAYA_EMAIL ? ("ADMIN" as const) : ("MEMBER" as const)
     await prisma.user.upsert({
       where: { email: member.email },
-      create: { email: member.email, name: member.name, role: "MEMBER" },
-      update: { name: member.name },
+      create: { email: member.email, name: member.name, role },
+      update: { name: member.name, role },
     })
   }
 
-  const usersByName = new Map(
-    (await prisma.user.findMany()).map((user) => [user.name, user.id]),
-  )
+  const maya = await prisma.user.findUniqueOrThrow({ where: { email: MAYA_EMAIL } })
+  const allUsers = await prisma.user.findMany()
+  const usersByName = new Map(allUsers.map((user) => [user.name, user.id]))
+  const otherUserIds = allUsers.filter((u) => u.id !== maya.id).map((u) => u.id)
 
   const projectIds = new Map<string, string>()
 
   for (const project of projects) {
     const { key, ...projectData } = project
     const existing = await prisma.project.findFirst({ where: { name: project.name } })
+
+    // Clear stale memberships before re-attaching owner + members for this seed project.
+    if (existing) {
+      await prisma.projectMember.deleteMany({ where: { projectId: existing.id } })
+    }
+
     const record = existing
       ? await prisma.project.update({
           where: { id: existing.id },
-          data: projectData,
+          data: { ...projectData, ownerId: maya.id },
         })
-      : await prisma.project.create({ data: projectData })
+      : await prisma.project.create({
+          data: { ...projectData, ownerId: maya.id },
+        })
 
     projectIds.set(key, record.id)
+
+    await prisma.projectMember.upsert({
+      where: { projectId_userId: { projectId: record.id, userId: maya.id } },
+      create: { projectId: record.id, userId: maya.id, role: "PROJECT_LEAD" },
+      update: { role: "PROJECT_LEAD" },
+    })
+
+    // Active projects get the rest of the seed roster as members.
+    if (project.status === "ACTIVE") {
+      for (const userId of otherUserIds) {
+        await prisma.projectMember.upsert({
+          where: { projectId_userId: { projectId: record.id, userId } },
+          create: { projectId: record.id, userId, role: "PROJECT_MEMBER" },
+          update: { role: "PROJECT_MEMBER" },
+        })
+      }
+    }
   }
 
   for (const task of tasks) {

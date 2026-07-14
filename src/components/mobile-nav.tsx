@@ -1,5 +1,12 @@
 "use client"
 
+/**
+ * Slide-out navigation drawer for viewports below the lg breakpoint.
+ *
+ * Uses the native `<dialog>` element for accessible modal behavior. The drawer
+ * auto-closes when the route changes so users land on a clean screen after
+ * navigation.
+ */
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -10,13 +17,15 @@ import { cn } from "@/lib/utils"
 
 type MobileNavProps = {
   userName: string
+  roleLabel: string
 }
 
-export function MobileNav({ userName }: MobileNavProps) {
+export function MobileNav({ userName, roleLabel }: MobileNavProps) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
 
+  // Sync React open state with the dialog's native open/close API
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
@@ -24,6 +33,7 @@ export function MobileNav({ userName }: MobileNavProps) {
     if (!open && dialog.open) dialog.close()
   }, [open])
 
+  // Close drawer after in-app navigation
   useEffect(() => {
     setOpen(false)
   }, [pathname])
@@ -92,9 +102,9 @@ export function MobileNav({ userName }: MobileNavProps) {
             <div className="flex size-8 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
               {taskInitials(userName)}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1 overflow-hidden">
               <p className="truncate text-sm font-medium">{userName}</p>
-              <p className="truncate text-xs text-muted-foreground">Team member</p>
+              <p className="truncate text-xs text-muted-foreground">{roleLabel}</p>
             </div>
           </div>
         </div>

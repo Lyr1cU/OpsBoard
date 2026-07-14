@@ -1,3 +1,10 @@
+/**
+ * Supabase OAuth / magic-link callback handler (GET /auth/callback).
+ *
+ * Exchanges the authorization code for a session, then redirects to the
+ * requested `next` path or home. On failure, sends the user to login with an
+ * error query parameter.
+ */
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 

@@ -1,6 +1,15 @@
+/**
+ * Server-side Supabase client for OpsBoard (Server Components, actions, routes).
+ *
+ * Reads and writes auth cookies via Next.js `cookies()` so session state stays
+ * in sync with middleware. The setAll catch is intentional: Server Components
+ * cannot always mutate cookies — middleware refreshes the session on navigation.
+ */
+
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
+/** Async because Next.js 15+ cookies() is a Promise in some contexts. */
 export async function createClient() {
   const cookieStore = await cookies()
 
